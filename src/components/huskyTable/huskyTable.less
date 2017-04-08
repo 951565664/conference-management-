@@ -3,17 +3,44 @@
     
     .top{
     overflow: hidden;
-    margin: 10px;
+    margin: 10px 0px;
     .addBtn{
         float: left;
     }
     .searchBox{
         float: right;
-        max-width: 280px;
+        max-width: 230px;
+        margin-left:10px; 
     }
     &:after{
     content: '';
     clear: both;  
     }
 }
+}
+
+
+.mask{
+     position:fixed;
+     top:0;
+     left:0;
+     height:100%;
+     width:100%;
+     background-color:rgbA(0,0,0,0.5);
+     z-index:25;
+     text-align: center;
+}
+.model{
+    background-color:rgbA(255,255,255,1);
+    width:500px;
+    margin:0 auto;
+    padding: 30px 20px 5px;
+    position: relative;
+    top: 50%;
+    margin-top: -200px;
+    :global{
+        .ant-spin{
+            left: 0px;
+        }
+    }
 }

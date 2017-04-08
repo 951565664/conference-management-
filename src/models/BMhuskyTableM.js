@@ -215,7 +215,7 @@ export default {
       history.listen(location => {
         if (location.pathname === '/') {
 
-          dispatch({ type: 'updataBuffer', });
+          dispatch({ type: 'updateBuffer', });
           
         }
       });
@@ -234,7 +234,7 @@ export default {
     updateState(state, action) {
       return { ...state, ...action.payload };
     },
-    updataBuffer(state, action) {
+    updateBuffer(state, action) {
       return { ...state, dataSourceBuffer:state.dataSource };
     },
     

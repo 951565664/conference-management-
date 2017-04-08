@@ -8,8 +8,8 @@ const app = dva();
 // app.use({});
 
 // 3. Model
+// app.model(require('./models/loginM'));
 app.model(require('./models/mainM'));
-app.model(require('./models/topM'));
 app.model(require('./models/KQhuskyTableM'));
 app.model(require('./models/WZhuskyTableM'));
 app.model(require('./models/BMhuskyTableM'));

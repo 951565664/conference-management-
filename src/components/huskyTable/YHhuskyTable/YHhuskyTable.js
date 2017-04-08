@@ -11,7 +11,10 @@ import styles from '../huskyTable.less';
 import INHuskyTable from '../huskyTable';
 import SearchBox from '../searchBox';
 import EditableCell from '../editableCell';
+import AddNewItemComponent from './AddNewItem';
 import { Table, Input, Icon, Button, Popconfirm } from 'antd';
+
+
 const Search = Input.Search;
 
 function HuskyTable({dispatch,huskyTableM, }) {
@@ -19,8 +22,15 @@ function HuskyTable({dispatch,huskyTableM, }) {
      * 参数：key，key是datasourcs
      * 功能：将model的dataSource的editable更新，整个dataSource更新。
      */
-    const edit = (newDataSource) => {
-        dispatch({ type: 'YHhuskyTableM/updateState', payload: { dataSource: newDataSource,dataSourceBuffer:newDataSource,isEditLock: true}});
+    const edit = (record) => {
+        dispatch({
+            type: 'YHhuskyTableM/updateState',
+            payload: {
+                editUserObj:record,
+                isAddNewItem: true,
+            }
+        })
+        // dispatch({ type: 'YHhuskyTableM/updateState', payload: { dataSource: newDataSource,dataSourceBuffer:newDataSource,isEditLock: true}});
         
     };
 
@@ -57,27 +67,75 @@ function HuskyTable({dispatch,huskyTableM, }) {
     /**
      * 删除表格中的条目
      */
-    const handleDelete = (dataSourceBuffer) => {        
-        dispatch({ type: 'YHhuskyTableM/updateState', payload: { dataSourceBuffer: dataSourceBuffer, dataSource: dataSourceBuffer, isEditLock: false } });
+    const handleDelete = (id) => {        
+        // dispatch({ type: 'YHhuskyTableM/updateState', payload: { dataSourceBuffer: dataSourceBuffer, dataSource: dataSourceBuffer, isEditLock: false } });
+        dispatch({
+          type: 'YHhuskyTableM/requestDeleteItem',
+          payload: id
+        });
     }
 
     /***
      * 增加表格事件
      */
     const handleAdd = (newDataSource) => {
-            dispatch(
-                {
-                    type: 'YHhuskyTableM/updateState',
-                    payload: {
-                        dataSourceBuffer: newDataSource,
-                        dataSource: newDataSource,
-                        dataSourceLength: huskyTableM.dataSourceLength + 1,
-                        isEditLock: true,
-                        isNewItem: true,
-                        paginationCurrent: parseInt(huskyTableM.dataSourceLength / huskyTableM.paginationPageSize) + 1
-                    }
-                });
+        dispatch({
+            type: 'YHhuskyTableM/updateState',
+            payload: {
+                isAddNewItem: true,
+                editUserObj:undefined,
+            }
+        })
     }
+
+    /***
+     * @name handleSubmitNewItem 
+     * @param values 新增的数据
+     * @description 确认增加表格条目事件表格事件
+     */
+    const handleSubmitNewItem = (values) => {
+        dispatch({
+          type: 'YHhuskyTableM/requestAddNewItem',
+          payload: {
+              name: values.name,
+              noUser:values.noUser,
+              sex:values.sex, 
+              attr:values.attr,
+              deptName:values.deptName,
+              pwd:values.pwd,
+          }
+        });
+    }
+    /***
+     * @name handleCancelAddNewItem 
+     * @description 取消新item弹出框
+     */
+    const handleCancelAddNewItem = () => {
+        dispatch({
+            type: 'YHhuskyTableM/updateState',
+            payload: { isAddNewItem: false, }
+        });
+    }
+    /***
+     * @name handleSubmitNewItem 
+     * @param values 新增的数据
+     * @description 确认增加表格条目事件表格事件
+     */
+    const handleSubmitEditItem = (values) => {
+        dispatch({
+          type: 'YHhuskyTableM/requestEditItem',
+          payload: {
+              id: huskyTableM.editUserObj.id,
+              name: values.name,
+              noUser:values.noUser,
+              sex:values.sex, 
+              attr:values.attr,
+              deptName:values.deptName,
+              pwd:values.pwd,
+          }
+        });
+    }
+
 
     /***
      * 搜索表格事件，传入搜索的字段
@@ -103,15 +161,34 @@ function HuskyTable({dispatch,huskyTableM, }) {
     // }   
     
     return (
-        
-        <INHuskyTable columns={huskyTableM.columns} isEditLock={huskyTableM.isEditLock} dataSource={huskyTableM.dataSource} 
+        <div>
+        <INHuskyTable 
+        columns={huskyTableM.columns} isEditLock={huskyTableM.isEditLock} dataSource={huskyTableM.dataSource} 
         isNewItem={huskyTableM.isNewItem} dataSourceBufferProp={huskyTableM.dataSourceBuffer} paginationCurrent={huskyTableM.paginationCurrent} 
         paginationPageSize={huskyTableM.paginationPageSize} 
         searchValue={huskyTableM.searchValue} dataSourceLength={huskyTableM.dataSourceLength}
         editProps={edit} checkConfimProps={checkConfim} checkCancleProps={checkCancle}
         onCellChangeProps={onCellChange} handleDeleteProps={handleDelete} handleAddProps={handleAdd}
         searchClickProps={searchClick} onChangeTableProps={onChangeTable} emitEmptyhandleProps={emitEmptyhandle}
-        onChangeSearchValueProps={onChangeSearchValue}/>
+        onChangeSearchValueProps={onChangeSearchValue} inputPlaceholder={huskyTableM.inputPlaceholder} searchOptionIndex={huskyTableM.searchOptionIndex} 
+        isNormal={true} tableLoading={huskyTableM.tableLoading}/>
+        {
+            huskyTableM.isAddNewItem
+            ?
+            <div className={styles["mask"]}>
+                <div className={styles["model"]} >
+                    <AddNewItemComponent AddNewItemLoading={huskyTableM.AddNewItemLoading} 
+                    handleSubmitNewItem={handleSubmitNewItem} handleCancelAddNewItem={handleCancelAddNewItem} 
+                    handleSubmitEditItem={handleSubmitEditItem}
+                    editUserObj={huskyTableM.editUserObj}></AddNewItemComponent>
+                    
+                </div>
+            </div>
+            :
+            null
+        }
+        </div>
+
     );
 }
 

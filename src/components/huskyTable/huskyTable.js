@@ -7,17 +7,15 @@ import React, { Component, PropTypes } from 'react';
 import { connect } from 'dva';
 import { Link } from 'dva/router';
 import styles from './huskyTable.less';
-
 import SearchBox from './searchBox';
-
 import EditableCell from './editableCell';
 import { Table, Input, Icon, Button, Popconfirm } from 'antd';
 const Search = Input.Search;
 
-function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferProp,paginationCurrent,paginationPageSize,
-            dataSourceLength,searchValue,isCanOrder,isCanOrderChangeProps,inputPlaceholder,
-            editProps, checkConfimProps, checkCancleProps,onCellChangeProps,handleDeleteProps, 
-            handleAddProps,searchClickProps, onChangeTableProps, emitEmptyhandleProps,onChangeSearchValueProps, }) {
+function HuskyTable({isNormal,columns, isEditLock,dataSource,isNewItem,dataSourceBufferProp,paginationCurrent,
+    paginationPageSize,dataSourceLength,searchValue,isCanOrder,isCanOrderChangeProps,inputPlaceholder,
+    editProps, checkConfimProps, checkCancleProps,onCellChangeProps,handleDeleteProps,handleAddProps,tableLoading,
+    searchClickProps, onChangeTableProps, emitEmptyhandleProps,onChangeSearchValueProps,searchOptionIndex }) {
 
     /*
     *columns的假数据,增加了底部事件栏的渲染
@@ -45,7 +43,7 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
                                         onClick={() => checkCancle(record.key)}
                                         />
                                         </span>
-                                        : <Button type="primary" icon="edit" onClick={() =>edit(record.key)} className="editable-cell-icon" ghost></Button>
+                                        : <Button type="primary" icon="edit" onClick={() =>edit(record)} className="editable-cell-icon" ghost></Button>
                                     }
                                 </div>
                             ) : null
@@ -58,7 +56,7 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
                     return (
                         <EditableCell
                             value={text}
-                            onChange={onCellChange(index, item.dataIndex)}//()=>onCellChange(index, item.dataIndex)
+                            onChange={onCellChange(index, item.dataIndex)}
                             editable={record.editable} />
                     );
                 }
@@ -70,10 +68,22 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
 
 
     /*** 编辑时触发函数
-     * 参数：key，key是datasourcs
+     * 参数： record 是要变更的整个item
      * 功能：将model的dataSource的editable更新，整个dataSource更新。
      */
-    const edit = (editKey) => {
+    const edit = (record) => {
+        let editKey = record.key
+        // 如果是新的组件
+        if (isNormal == true) {
+            if (editProps) {
+                editProps(record);
+            }
+            else {
+                console.error("没有 editProps 这个参数");
+            }
+            return;
+        }
+
         /**
          * 将可编辑isEditLock锁住
          * */ 
@@ -132,8 +142,7 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             let newDataSource = dataSourceBufferProp.map((item, key) => {
                 if (checkKey == item.key) {
                     return { ...item, editable: false }
-                }
-                else {
+                }else {
                     return { ...item };
                 }
             });
@@ -141,14 +150,9 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             /**回调 */
             if(checkConfimProps){
                 checkConfimProps(newDataSource);
-            }
-            else{
+            }else{
                 console.error("没有 checkConfimProps 这个参数");
             }
-            /**回调 */
-
-
-
         }
         else{
             alert('请填入数据2')
@@ -164,7 +168,6 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
     const checkCancle = (checkKey) => {
         debugger;
         if(!isNewItem){
-            
             let newDataSource = dataSource.map((item, key) => {
                     if (checkKey == item.key) {
                         return { ...item, editable: false }
@@ -177,13 +180,9 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             /**回调 */
             if(checkCancleProps){
                 checkCancleProps(true,newDataSource);
-            }
-            else{
+            }else{
                 console.error("没有 checkCancleProps 这个参数");
             }
-            /**回调 */
-
-           
         }
         else{
             /**回调 */
@@ -193,7 +192,7 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             else{
                 console.error("没有 checkCancleProps 这个参数");
             }
-            /**回调 */
+
             onDelete(checkKey);
         }
     };
@@ -213,8 +212,6 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             else{
                 console.error("没有onCellChangeProps这个参数");
             }
-            /**回调 */
-            
         }
         else {
             return (value) => {
@@ -231,20 +228,30 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
                 /**回调 */
                 if(onCellChangeProps){
                     onCellChangeProps(dataSourceBuffer);
+                }else{
+                    console.error("没有onCellChangeProps这个参数");             
                 }
-                else{
-                    console.error("没有onCellChangeProps这个参数");
-                    
-                }
-                /**回调 */
             };
         }
     }
 
     /**
-     * 删除表格中的条目
+     * @name onDelete
+     * @param checkKey 操作的key（id）
+     * @description 删除表格中的条目
      */
-    const onDelete = (checkKey) => {        
+    const onDelete = (checkKey) => {
+
+        // 如果是新的组件
+        if(isNormal == true){
+           if(handleDeleteProps){
+                handleDeleteProps(checkKey);
+            }else{
+                console.error("没有 handleDeleteProps 这个参数");
+            }
+            return ;
+        }
+
         var dataSourceBuffer = dataSourceBufferProp.map(
             (item, key) => {
                 return { ...item };
@@ -260,13 +267,9 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
          /**回调 */
         if(handleDeleteProps){
             handleDeleteProps(dataSourceBuffer);
-        }
-        else{
+        }else{
             console.error("没有 handleDeleteProps 这个参数");
-            
         }
-        /**回调 */
-        
     }
 
     
@@ -274,26 +277,18 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
      * 增加表格事件
      */
     const handleAdd = () => {
-
+        // 如果是带弹窗的组件
+        if(isNormal == true){
+            if(handleAddProps){
+                handleAddProps(newDataSource);
+            }else{
+                console.error("没有 handleAddProps 这个参数");
+            }
+            return ;
+        }
 
         //判断当前是否锁住了，如果锁住提示请先保存
         if (!isEditLock) {
-            //  var arr = Object.keys(dataSource)
-            //  const newDataItem = arr.map(
-            //      (item,key) => {
-            //          return {item:}
-            //      }
-            //  )
-
-            // // 新增一个item,初始化全为空
-            // const newDataItem = {
-            //     key: dataSourceLength.toString(),
-            //     name: '',
-            //     age: '',
-            //     address: ``,
-            //     editable: true,
-            // };
-
             var newDataItem ;
             if(dataSource.length > 0)
             {
@@ -307,8 +302,6 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
                         item=='editable' && (newDataItem[item] = true);
                     }
                 )
-
-                console.log('newDataItemnewDataItem',newDataItem)
             }
             var newDataSource = dataSource.map(
                 (item, key) => {
@@ -334,19 +327,7 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             }
             else{
                 console.error("没有 handleAddProps 这个参数");
-                
             }
-            /**回调 */
-            /**回调 */
-            // if(isCanOrderChangeProps){
-            //     isCanOrderChangeProps('ascend');
-            // }
-            // else{
-            //     console.error("没有 isCanOrderChangeProps 这个参数");
-                
-            // }
-        /**回调 */
-
         }
         else {
             alert("请先保存");
@@ -356,13 +337,7 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
     /***
      * 搜索表格事件，传入搜索的字段
      */
-
-
-
-
     const onSearchClick = (searchNum) => {
-
-
         if (!isEditLock) {
             if (!searchNum && searchNum != ' ') {
 
@@ -379,7 +354,7 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
                 //将匹配的searchNum进行匹配
                 var reg = new RegExp(searchNum);
                 // 如果匹配。将匹配的放到新的数组
-                if (reg.test(elem.key)) {
+                if (reg.test(elem[searchOptionIndex])) {
                     newDataSource.push(dataSource[index]);
                 }
             }
@@ -389,10 +364,8 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             }
             else{
                 console.error("没有 searchClickProps 这个参数");
-                
             }
             /**回调 */
-            
         }
     }
     
@@ -404,7 +377,6 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             }
             else{
                 console.error("没有 onChangeTableProps 这个参数");
-                
             }
         /**回调 */
     }
@@ -416,7 +388,6 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
             }
             else{
                 console.error("没有 emitEmptyhandleProps 这个参数");
-                
             }
         /**回调 */
         
@@ -430,12 +401,9 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
         /**回调 */
             if(onChangeSearchValueProps){
                formatValue(value) &&  onChangeSearchValueProps(value);
-               
-                
             }
             else{
                 console.error("没有 onChangeSearchValueProps 这个参数");
-                
             }
         /**回调 */
     }
@@ -446,7 +414,7 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
                 <div className={styles["addBtn"]}><Button type="primary" icon="plus" onClick={handleAdd}></Button></div>
                 <div className={styles["searchBox"]}><SearchBox inputPlaceholder={inputPlaceholder} emitEmptyhandle={emitEmptyhandle} searchValue={searchValue} onChangeSearchValue={onChangeSearchValue}  onSearchClick={onSearchClick}/></div>
             </div>
-            <Table bordered dataSource={dataSourceBufferProp} columns={newColumns}  onChange={onChangeTable} pagination={{current:paginationCurrent,defaultPageSize:paginationPageSize}}/>
+            <Table bordered loading={tableLoading} dataSource={dataSourceBufferProp} columns={newColumns}  onChange={onChangeTable} pagination={{current:paginationCurrent,defaultPageSize:paginationPageSize}}/>
         </div>
     );
 }
@@ -454,7 +422,6 @@ function HuskyTable({columns, isEditLock,dataSource,isNewItem,dataSourceBufferPr
 HuskyTable.propTypes = {
 };
 
-// export default connect(({YHhuskyTableM}) => ({huskyTableM:YHhuskyTableM}))(HuskyTable);
 export default HuskyTable;
 
 
